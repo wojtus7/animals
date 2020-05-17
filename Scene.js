@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { ExpoWebGLRenderingContext, GLView } from 'expo-gl';
 import { Renderer, TextureLoader, loadAsync } from 'expo-three';
 
@@ -16,10 +16,9 @@ import {
 } from 'three';
 
 export default function App() {
-  const [lastChange, setLastChange] = useState(0.01);
   let timeout;
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Clear the animation loop when the component unmounts
     return () => clearTimeout(timeout);
   }, []);
@@ -86,16 +85,4 @@ export default function App() {
       }}
     />
   );
-}
-
-class IconMesh extends Mesh {
-  constructor() {
-    super(
-      new BoxBufferGeometry(1.0, 4.0, 1.0),
-      new MeshStandardMaterial({
-        map: new TextureLoader().load(require('./assets/icon.png')),
-        // color: 0xff0000
-      })
-    );
-  }
 }
