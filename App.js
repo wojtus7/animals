@@ -15,6 +15,8 @@ export default function App() {
   let [lastFood, setlastFood] = useState(Date.now());
   let [isDead, setIsDead] = useState(false);
   let [delay, setDelay] = useState(1000);
+  let [furnitures, setFurnitures] = useState(['bed', 'sofa', 'rug', 'tv', 'plants', 'office', 'radio']);
+
 
   useEffect(() => {
     setTimeout(async () => {
@@ -81,7 +83,7 @@ export default function App() {
   return (
     <View>
       <View style={{ height: screen.height, width: screen.width, position: 'absolute' }}>
-        <Scene />
+        <Scene furnitures={furnitures}/>
       </View>
       <View style={{ height: 40, paddingTop: 120 }}>
         <TouchableOpacity
