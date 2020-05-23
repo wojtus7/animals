@@ -2,7 +2,7 @@ import { includes } from 'lodash';
 import React, { useEffect } from "react";
 import { View, TouchableOpacity, Text } from 'react-native';
 
-export default function Shop({ furnitures, addFurniture, removeFurnitures, closeShop }) {
+export default function Shop({ furnitures, addFurniture, removeFurnitures }) {
 
   const renderThingInShop = (name, displayName) => (
     <TouchableOpacity
@@ -24,12 +24,6 @@ export default function Shop({ furnitures, addFurniture, removeFurnitures, close
       {renderThingInShop('radio', 'Radio')}
       {renderThingInShop('office', 'Office')}
       {renderThingInShop('sofa', 'Sofa')}
-      <TouchableOpacity
-        style={{ height: 30 }}
-        onPress={closeShop}
-      >
-        <Text>close shop</Text>
-      </TouchableOpacity>
     </View>
   );
 }

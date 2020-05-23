@@ -4,13 +4,16 @@ import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { AsyncStorage, Dimensions, Image } from 'react-native';
 import Expo, { Notifications } from "expo";
 import * as Permissions from 'expo-permissions';
-import Scene from './Scene'
-import Shop from './Shop'
+import Scene from './Scene';
+import Shop from './Shop';
+import Deli from './Deli';
 
 const screen = {
   height: Math.round(Dimensions.get('window').height),
   width: Math.round(Dimensions.get('window').width)
 };
+
+const maxHungerPoints = 100;
 
 export default function App() {
   let [hunger, setHunger] = useState(0);
@@ -21,6 +24,7 @@ export default function App() {
 
   let [isRoomVisible, setIsRoomVisible] = useState(true);
   let [isShopVisible, setIsShopVisible] = useState(false);
+  let [isDeliVisible, setIsDeliVisible] = useState(false);
 
   useEffect(() => {
     setTimeout(async () => {
@@ -45,8 +49,8 @@ export default function App() {
   }, delay);
 
   const checkHunged = (hunger) => {
-    if (hunger > 100) {
-      setHunger(100);
+    if (hunger > maxHungerPoints) {
+      setHunger(maxHungerPoints);
       setIsDead(true);
     } else {
       setHunger(hunger);
@@ -54,15 +58,18 @@ export default function App() {
   }
 
   const sendNotification = async (msToNotification) => {
-    Notifications.cancelAllScheduledNotificationsAsync();
-    const { status } = await Permissions.askAsync(
-      Permissions.NOTIFICATIONS,
-    );
-    if (status === 'granted') {
-      const lol = await Notifications.scheduleLocalNotificationAsync(
-        { title: "Animal", body: "Your pet is hungry. 😢" },
-        { time: new Date().getTime() + msToNotification }
+    console.log(msToNotification);
+    if (msToNotification > 0) {
+      Notifications.cancelAllScheduledNotificationsAsync();
+      const { status } = await Permissions.askAsync(
+        Permissions.NOTIFICATIONS,
       );
+      if (status === 'granted') {
+        const lol = await Notifications.scheduleLocalNotificationAsync(
+          { title: "Animal", body: "Your pet is hungry. 😢" },
+          { time: new Date().getTime() + msToNotification }
+        );
+      }
     }
   }
 
@@ -75,7 +82,7 @@ export default function App() {
   }
 
   const respawn = () => {
-    sendNotification(80000);
+    sendNotification(maxHungerPoints - Math.floor(maxHungerPoints * 0.2));
     setIsDead(false);
     setlastFood(Date.now());
     setHunger(0);
@@ -83,14 +90,18 @@ export default function App() {
     resetFurnitures([]);
   }
 
-  const giveFood = async () => {
-    sendNotification(80000);
-    setlastFood(Date.now());
-    setHunger(0);
+  const giveFood = async (foodCalories) => {
+    let newHunger = hunger - foodCalories;
+    if (newHunger < 0) {
+      newHunger = 0;
+    }
+    setlastFood(Date.now() - (newHunger * 1000));
+    setHunger(newHunger);
     saveLastFood();
+    sendNotification(((maxHungerPoints - Math.floor(maxHungerPoints * 0.2)) - newHunger ));
   }
 
-  const resetFurnitures = async (furniture) => {
+  const resetFurnitures = async () => {
     setIsRoomVisible(false);
     setFurnitures([]);
     setTimeout(() => {
@@ -122,25 +133,18 @@ export default function App() {
     setIsShopVisible(true);
   }
 
+  const closeDeli = () => {
+    setIsDeliVisible(false);
+  }
+
+  const openDeli = () => {
+    setIsDeliVisible(true);
+  }
+
   return (
-    <View>
+    <View style={{ height: screen.height, width: screen.width }}>
       <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
         {isRoomVisible ? <Scene furnitures={furnitures} /> : null}
-      </View>
-      <View style={{ height: 40, paddingTop: 120 }}>
-        <Text style={{ height: 30 }}>Hunger: {100 - hunger}</Text>
-        <TouchableOpacity
-          style={{ height: 30 }}
-          onPress={giveFood}
-        >
-          <Text style={{ height: 30 }}>Give food</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{ height: 30 }}
-          onPress={openShop}
-        >
-          <Text style={{ height: 30 }}>Open shop</Text>
-        </TouchableOpacity>
       </View>
       {isDead ?
         <TouchableOpacity
@@ -163,6 +167,27 @@ export default function App() {
         <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
           <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} />
         </View> : null}
+      {isDeliVisible ?
+        <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
+          <Deli giveFood={giveFood} />
+        </View> : null}
+      <View style={{ height: 40, paddingTop: 120 }}>
+        <Text style={{ height: 30 }}>Hunger: {Math.round(((maxHungerPoints - hunger) / maxHungerPoints) * 100)}%</Text>
+      </View>
+      <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0 }}>
+        <TouchableOpacity
+          style={{ height: 30 }}
+          onPress={isDeliVisible ? closeDeli : openDeli}
+        >
+          <Text style={{ height: 30 }}>{isDeliVisible ? 'Close' : 'Open'} deli</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ height: 30 }}
+          onPress={isShopVisible ? closeShop : openShop}
+        >
+          <Text style={{ height: 30 }}>{isShopVisible ? 'Close' : 'Open'} shop</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
