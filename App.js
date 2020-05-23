@@ -1,9 +1,11 @@
+import { without } from 'lodash';
 import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
+import { AsyncStorage, Dimensions, Image } from 'react-native';
 import Expo, { Notifications } from "expo";
 import * as Permissions from 'expo-permissions';
 import Scene from './Scene'
-import { AsyncStorage, Dimensions, Image } from 'react-native';
+import Shop from './Shop'
 
 const screen = {
   height: Math.round(Dimensions.get('window').height),
@@ -15,8 +17,10 @@ export default function App() {
   let [lastFood, setlastFood] = useState(Date.now());
   let [isDead, setIsDead] = useState(false);
   let [delay, setDelay] = useState(1000);
-  let [furnitures, setFurnitures] = useState(['bed', 'sofa', 'rug', 'tv', 'plants', 'office', 'radio']);
+  let [furnitures, setFurnitures] = useState([]);
 
+  let [isRoomVisible, setIsRoomVisible] = useState(true);
+  let [isShopVisible, setIsShopVisible] = useState(false);
 
   useEffect(() => {
     setTimeout(async () => {
@@ -62,50 +66,80 @@ export default function App() {
     }
   }
 
-  const respawn = () => {
-    sendNotification(80000);
-    setIsDead(false);
-    setlastFood(Date.now());
-    setHunger(0);
-  }
-
-  const giveFood = async () => {
-    sendNotification(80000);
-    setlastFood(Date.now());
+  const saveLastFood = async () => {
     try {
       const nowDateString = String(Date.now());
       await AsyncStorage.setItem('@lastFoodTimestamp', nowDateString);
     } catch (e) {
     }
+  }
+
+  const respawn = () => {
+    sendNotification(80000);
+    setIsDead(false);
+    setlastFood(Date.now());
     setHunger(0);
+    saveLastFood();
+    resetFurnitures([]);
+  }
+
+  const giveFood = async () => {
+    sendNotification(80000);
+    setlastFood(Date.now());
+    setHunger(0);
+    saveLastFood();
+  }
+
+  const resetFurnitures = async (furniture) => {
+    setIsRoomVisible(false);
+    setFurnitures([]);
+    setTimeout(() => {
+      setIsRoomVisible(true);
+    }, 20);
+  }
+
+  const addFurniture = async (furniture) => {
+    setIsRoomVisible(false);
+    setFurnitures(furnitures => [...furnitures, furniture]);
+    setTimeout(() => {
+      setIsRoomVisible(true);
+    }, 20);
+  }
+
+  const removeFurnitures = async (furniture) => {
+    setIsRoomVisible(false);
+    setFurnitures(without(furnitures, furniture));
+    setTimeout(() => {
+      setIsRoomVisible(true);
+    }, 20);
+  }
+
+  const closeShop = () => {
+    setIsShopVisible(false);
+  }
+
+  const openShop = () => {
+    setIsShopVisible(true);
   }
 
   return (
     <View>
-      <View style={{ height: screen.height, width: screen.width, position: 'absolute' }}>
-        <Scene furnitures={furnitures}/>
+      <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
+        {isRoomVisible ? <Scene furnitures={furnitures} /> : null}
       </View>
       <View style={{ height: 40, paddingTop: 120 }}>
+        <Text style={{ height: 30 }}>Hunger: {100 - hunger}</Text>
         <TouchableOpacity
-          style={{ height: 100 }}
+          style={{ height: 30 }}
           onPress={giveFood}
         >
-          <Text style={{ height: 20 }}>Hunger: {100 - hunger}</Text>
+          <Text style={{ height: 30 }}>Give food</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{ height: 100 }}
-          onPress={async () => {
-            sendNotification(80000);
-            setlastFood(Date.now());
-            try {
-              const nowDateString = String(Date.now());
-              await AsyncStorage.setItem('@lastFoodTimestamp', nowDateString);
-            } catch (e) {
-            }
-            setHunger(0);
-          }}
+          style={{ height: 30 }}
+          onPress={openShop}
         >
-          <Text style={{ height: 20 }}>Give food</Text>
+          <Text style={{ height: 30 }}>Open shop</Text>
         </TouchableOpacity>
       </View>
       {isDead ?
@@ -125,6 +159,10 @@ export default function App() {
           source={require('./assets/penguin.png')}
         />
       }
+      {isShopVisible ?
+        <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
+          <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} />
+        </View> : null}
     </View>
   );
 }
