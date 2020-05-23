@@ -17,7 +17,7 @@ export default function Shop({ furnitures, addFurniture, removeFurnitures, money
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'white' }}>
-      {renderThingInShop('bed', 'Bed', 100)}
+      {renderThingInShop('bed', 'Bed', 50)}
       {renderThingInShop('tv', 'TV setup', 300)}
       {renderThingInShop('rug', 'Rugs', 75)}
       {renderThingInShop('plants', 'Plants', 100)}

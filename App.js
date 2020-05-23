@@ -13,7 +13,7 @@ const screen = {
   width: Math.round(Dimensions.get('window').width)
 };
 
-const maxHungerPoints = 100;
+const maxHungerPoints = 200;
 
 export default function App() {
   let [hunger, setHunger] = useState(0);
@@ -21,7 +21,7 @@ export default function App() {
   let [isDead, setIsDead] = useState(false);
   let [delay, setDelay] = useState(1000);
   let [furnitures, setFurnitures] = useState([]);
-  let [money, setMoney] = useState(200);
+  let [money, setMoney] = useState(100);
 
   let [isRoomVisible, setIsRoomVisible] = useState(true);
   let [isShopVisible, setIsShopVisible] = useState(false);
@@ -88,6 +88,7 @@ export default function App() {
     setHunger(0);
     saveLastFood();
     resetFurnitures([]);
+    setMoney(100);
   }
 
   const giveFood = async (foodCalories, cost) => {
@@ -171,7 +172,8 @@ export default function App() {
         </TouchableOpacity>
         :
         <Image
-          style={{ height: 80, width: 80, position: "absolute", top: screen.height / 2 + 50, left: screen.width / 2 - 40 }}
+          style={{ height: 90, width: 90, position: "absolute", top: screen.height / 2 + 50, left: screen.width / 2 - 40 }}
+          resizeMode={'contain'}
           source={require('./assets/penguin.png')}
         />
       }
@@ -183,10 +185,12 @@ export default function App() {
         <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
           <Deli giveFood={giveFood} money={money} />
         </View> : null}
+
       <View style={{ height: 40, paddingTop: 120 }}>
         <Text style={{ height: 30 }}>Hunger: {Math.round(((maxHungerPoints - hunger) / maxHungerPoints) * 100)}%</Text>
         <Text style={{ height: 30 }}>Money: ${money}</Text>
       </View>
+
       <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0 }}>
         <TouchableOpacity
           style={{ height: 30 }}
