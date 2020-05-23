@@ -1,7 +1,7 @@
 import { without } from 'lodash';
 import React, { useState, useEffect, useRef } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
-import { AsyncStorage, Dimensions, Image } from 'react-native';
+import { AsyncStorage, Dimensions, Image, LayoutAnimation } from 'react-native';
 import Expo, { Notifications } from "expo";
 import * as Permissions from 'expo-permissions';
 import Scene from './Scene';
@@ -26,6 +26,7 @@ export default function App() {
   let [isRoomVisible, setIsRoomVisible] = useState(true);
   let [isShopVisible, setIsShopVisible] = useState(false);
   let [isDeliVisible, setIsDeliVisible] = useState(false);
+  let [isWorkListVisible, setIsWorkListVisible] = useState(false);
 
   useEffect(() => {
     setTimeout(async () => {
@@ -137,21 +138,37 @@ export default function App() {
   }
 
   const closeShop = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsShopVisible(false);
   }
 
   const openShop = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsWorkListVisible(false);
     setIsDeliVisible(false);
     setIsShopVisible(true);
   }
 
   const closeDeli = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsDeliVisible(false);
   }
 
   const openDeli = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsWorkListVisible(false);
     setIsShopVisible(false);
     setIsDeliVisible(true);
+  }
+
+  const closeWorkList = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsWorkListVisible(false);
+  }
+
+  const openWorkList = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsWorkListVisible(true);
   }
 
   return (
@@ -177,32 +194,42 @@ export default function App() {
           source={require('./assets/penguin.png')}
         />
       }
-      {isShopVisible ?
-        <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
-          <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} money={money} />
-        </View> : null}
-      {isDeliVisible ?
-        <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
-          <Deli giveFood={giveFood} money={money} />
-        </View> : null}
+      
+      <View style={{ height: screen.height, width: screen.width, position: 'absolute', right: isShopVisible ? 0 : screen.width, }}>
+        <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} money={money} />
+      </View>
+
+      <View style={{ height: screen.height, width: screen.width, position: 'absolute', left: isDeliVisible ? 0 : screen.width, }}>
+        <Deli giveFood={giveFood} money={money} />
+      </View>
+
+      <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1, top: isWorkListVisible ? 0 : screen.height, }}>
+        <Deli giveFood={giveFood} money={money} />
+      </View>
 
       <View style={{ height: 40, paddingTop: 120 }}>
         <Text style={{ height: 30 }}>Hunger: {Math.round(((maxHungerPoints - hunger) / maxHungerPoints) * 100)}%</Text>
         <Text style={{ height: 30 }}>Money: ${money}</Text>
       </View>
 
-      <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0 }}>
+      <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
         <TouchableOpacity
-          style={{ height: 30 }}
-          onPress={isDeliVisible ? closeDeli : openDeli}
-        >
-          <Text style={{ height: 30 }}>{isDeliVisible ? 'Close' : 'Open'} deli</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={{ height: 30 }}
+          style={{ height: 30, flex: 3, alignItems: 'center' }}
           onPress={isShopVisible ? closeShop : openShop}
         >
-          <Text style={{ height: 30 }}>{isShopVisible ? 'Close' : 'Open'} shop</Text>
+          <Text style={{ height: 30 }}>{isShopVisible ? 'Close' : 'Open'} Shop</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ height: 30, flex: 3, alignItems: 'center' }}
+          onPress={isWorkListVisible ? closeWorkList : openWorkList}
+        >
+          <Text style={{ height: 30 }}>{isWorkListVisible ? 'Close' : 'Open'} Work List</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{ height: 30, flex: 3, alignItems: 'center' }}
+          onPress={isDeliVisible ? closeDeli : openDeli}
+        >
+          <Text style={{ height: 30 }}>{isDeliVisible ? 'Close' : 'Open'} Deli</Text>
         </TouchableOpacity>
       </View>
     </View>
