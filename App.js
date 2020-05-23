@@ -21,6 +21,7 @@ export default function App() {
   let [isDead, setIsDead] = useState(false);
   let [delay, setDelay] = useState(1000);
   let [furnitures, setFurnitures] = useState([]);
+  let [money, setMoney] = useState(200);
 
   let [isRoomVisible, setIsRoomVisible] = useState(true);
   let [isShopVisible, setIsShopVisible] = useState(false);
@@ -89,15 +90,19 @@ export default function App() {
     resetFurnitures([]);
   }
 
-  const giveFood = async (foodCalories) => {
-    let newHunger = hunger - foodCalories;
-    if (newHunger < 0) {
-      newHunger = 0;
+  const giveFood = async (foodCalories, cost) => {
+    let newMoney = money - cost;
+    if (newMoney >= 0) {
+      setMoney(newMoney);
+      let newHunger = hunger - foodCalories;
+      if (newHunger < 0) {
+        newHunger = 0;
+      }
+      setlastFood(Date.now() - (newHunger * 1000));
+      setHunger(newHunger);
+      saveLastFood();
+      sendNotification(((maxHungerPoints - Math.floor(maxHungerPoints * 0.2)) - newHunger));
     }
-    setlastFood(Date.now() - (newHunger * 1000));
-    setHunger(newHunger);
-    saveLastFood();
-    sendNotification(((maxHungerPoints - Math.floor(maxHungerPoints * 0.2)) - newHunger ));
   }
 
   const resetFurnitures = async () => {
@@ -108,15 +113,21 @@ export default function App() {
     }, 20);
   }
 
-  const addFurniture = async (furniture) => {
-    setIsRoomVisible(false);
-    setFurnitures(furnitures => [...furnitures, furniture]);
-    setTimeout(() => {
-      setIsRoomVisible(true);
-    }, 20);
+  const addFurniture = async (furniture, cost) => {
+    let newMoney = money - cost;
+    if (newMoney >= 0) {
+      setMoney(newMoney);
+      setIsRoomVisible(false);
+      setFurnitures(furnitures => [...furnitures, furniture]);
+      setTimeout(() => {
+        setIsRoomVisible(true);
+      }, 20);
+    }
   }
 
-  const removeFurnitures = async (furniture) => {
+  const removeFurnitures = async (furniture, cost) => {
+    let newMoney = money + (cost / 2);
+    setMoney(newMoney);
     setIsRoomVisible(false);
     setFurnitures(without(furnitures, furniture));
     setTimeout(() => {
@@ -129,6 +140,7 @@ export default function App() {
   }
 
   const openShop = () => {
+    setIsDeliVisible(false);
     setIsShopVisible(true);
   }
 
@@ -137,6 +149,7 @@ export default function App() {
   }
 
   const openDeli = () => {
+    setIsShopVisible(false);
     setIsDeliVisible(true);
   }
 
@@ -164,14 +177,15 @@ export default function App() {
       }
       {isShopVisible ?
         <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
-          <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} />
+          <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} money={money} />
         </View> : null}
       {isDeliVisible ?
         <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1 }}>
-          <Deli giveFood={giveFood} />
+          <Deli giveFood={giveFood} money={money} />
         </View> : null}
       <View style={{ height: 40, paddingTop: 120 }}>
         <Text style={{ height: 30 }}>Hunger: {Math.round(((maxHungerPoints - hunger) / maxHungerPoints) * 100)}%</Text>
+        <Text style={{ height: 30 }}>Money: ${money}</Text>
       </View>
       <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0 }}>
         <TouchableOpacity
