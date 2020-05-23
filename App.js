@@ -57,9 +57,8 @@ export default function App() {
     }
   }
 
-  const sendNotification = async (msToNotification) => {
-    console.log(msToNotification);
-    if (msToNotification > 0) {
+  const sendNotification = async (secToNotification) => {
+    if (secToNotification > 0) {
       Notifications.cancelAllScheduledNotificationsAsync();
       const { status } = await Permissions.askAsync(
         Permissions.NOTIFICATIONS,
@@ -67,7 +66,7 @@ export default function App() {
       if (status === 'granted') {
         const lol = await Notifications.scheduleLocalNotificationAsync(
           { title: "Animal", body: "Your pet is hungry. 😢" },
-          { time: new Date().getTime() + msToNotification }
+          { time: new Date().getTime() + (secToNotification * 1000) }
         );
       }
     }
