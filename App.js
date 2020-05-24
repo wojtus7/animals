@@ -25,7 +25,7 @@ export default function App() {
   let [money, setMoney] = useState(100);
   let [isAtWork, setIsAtWork] = useState(false);
   let [lastWork, setlastWork] = useState(false);
-  let [experience, setExperience] = useState(false);
+  let [experience, setExperience] = useState(0);
 
   let [isRoomVisible, setIsRoomVisible] = useState(true);
   let [isShopVisible, setIsShopVisible] = useState(false);
@@ -43,11 +43,17 @@ export default function App() {
             setlastWork(lastWorkSaved);
           } else {
             const newMoney = money + Number(lastWorkSaved.profit);
+            giveExperience();
             setMoney(newMoney);
             setIsAtWork(false);
             resetWork();
             setlastWork(false);
           }
+        }
+
+        let experience = await AsyncStorage.getItem('@experience');
+        if(experience) {
+          setExperience(Number(experience));
         }
 
         const lastFoodSaved = await AsyncStorage.getItem('@lastFoodTimestamp');
@@ -73,6 +79,7 @@ export default function App() {
         setlastWork(lastWork);
       } else {
         const newMoney = money + Number(lastWork.profit);
+        giveExperience();
         setMoney(newMoney);
         setIsAtWork(false);
         resetWork();
@@ -120,7 +127,11 @@ export default function App() {
     setHunger(0);
     saveLastFood();
     resetFurnitures([]);
+    resetExperience();
+    resetWork();
     setMoney(100);
+    setlastWork(false);
+    setExperience(0);
   }
 
   const giveFood = async (foodCalories, cost) => {
@@ -178,6 +189,7 @@ export default function App() {
         endTimestamp: Date.now() + (time * 1000)
       };
       await AsyncStorage.setItem('@lastWork', JSON.stringify(workInfo));
+      closeWorkList();
       setlastWork(workInfo);
     } catch (e) {
     }
@@ -186,6 +198,24 @@ export default function App() {
   const resetWork = async () => {
     try {
       await AsyncStorage.removeItem('@lastWork');
+    } catch (e) {
+    }
+  }
+
+  const giveExperience = async () => {
+    console.log('asdasdasd')
+    try {
+      console.log('asdasdasd')
+      const newExperience = experience + 1;
+      setExperience(newExperience);
+      await AsyncStorage.setItem('@experience', String(newExperience));
+    } catch (e) {
+    }
+  }
+
+  const resetExperience = async () => {
+    try {
+      await AsyncStorage.removeItem('@experience');
     } catch (e) {
     }
   }
@@ -248,7 +278,12 @@ export default function App() {
             <Text
               style={{ textAlign: 'center', fontSize: 25 }}
             >
-              PET IS AT WORK - {Math.floor((lastWork.endTimestamp - Date.now())/1000)}
+              PET IS AT WORK
+            </Text>
+            <Text
+              style={{ textAlign: 'center', fontSize: 25 }}
+            >
+              WILL BE BACK IN - {Math.floor((lastWork.endTimestamp - Date.now())/1000)}SEC
             </Text>
           </View>
           :
@@ -274,6 +309,7 @@ export default function App() {
       <View style={{ height: 40, paddingTop: 120 }}>
         <Text style={{ height: 30 }}>Hunger: {Math.round(((maxHungerPoints - hunger) / maxHungerPoints) * 100)}%</Text>
         <Text style={{ height: 30 }}>Money: ${money}</Text>
+        <Text style={{ height: 30 }}>Experience: {experience}</Text>
       </View>
 
       <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
