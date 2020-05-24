@@ -7,13 +7,14 @@ import * as Permissions from 'expo-permissions';
 import Scene from './Scene';
 import Shop from './Shop';
 import Deli from './Deli';
+import WorkList from './WorkList';
 
 const screen = {
   height: Math.round(Dimensions.get('window').height),
   width: Math.round(Dimensions.get('window').width)
 };
 
-const maxHungerPoints = 200;
+const maxHungerPoints = 500;
 
 export default function App() {
   let [hunger, setHunger] = useState(0);
@@ -22,6 +23,9 @@ export default function App() {
   let [delay, setDelay] = useState(1000);
   let [furnitures, setFurnitures] = useState([]);
   let [money, setMoney] = useState(100);
+  let [isAtWork, setIsAtWork] = useState(false);
+  let [lastWork, setlastWork] = useState(false);
+  let [experience, setExperience] = useState(false);
 
   let [isRoomVisible, setIsRoomVisible] = useState(true);
   let [isShopVisible, setIsShopVisible] = useState(false);
@@ -31,6 +35,21 @@ export default function App() {
   useEffect(() => {
     setTimeout(async () => {
       try {
+        let lastWorkSaved = await AsyncStorage.getItem('@lastWork');
+        lastWorkSaved = JSON.parse(lastWorkSaved);
+        if (lastWorkSaved) {
+          if (lastWorkSaved.endTimestamp > Date.now()) {
+            setIsAtWork(true);
+            setlastWork(lastWorkSaved);
+          } else {
+            const newMoney = money + Number(lastWorkSaved.profit);
+            setMoney(newMoney);
+            setIsAtWork(false);
+            resetWork();
+            setlastWork(false);
+          }
+        }
+
         const lastFoodSaved = await AsyncStorage.getItem('@lastFoodTimestamp');
         if (lastFoodSaved) {
           setlastFood(lastFoodSaved);
@@ -48,6 +67,18 @@ export default function App() {
     hunger = Math.floor((Date.now() - lastFood) / 1000);
     checkHunged(hunger);
 
+    if (lastWork) {
+      if (lastWork.endTimestamp > Date.now()) {
+        setIsAtWork(true);
+        setlastWork(lastWork);
+      } else {
+        const newMoney = money + Number(lastWork.profit);
+        setMoney(newMoney);
+        setIsAtWork(false);
+        resetWork();
+        setlastWork(false);
+      }
+    }
   }, delay);
 
   const checkHunged = (hunger) => {
@@ -137,6 +168,28 @@ export default function App() {
     }, 20);
   }
 
+  const startWork = async (name, time, profit) => {
+    setIsAtWork(true);
+    try {
+      const workInfo = {
+        name,
+        time,
+        profit,
+        endTimestamp: Date.now() + (time * 1000)
+      };
+      await AsyncStorage.setItem('@lastWork', JSON.stringify(workInfo));
+      setlastWork(workInfo);
+    } catch (e) {
+    }
+  }
+
+  const resetWork = async () => {
+    try {
+      await AsyncStorage.removeItem('@lastWork');
+    } catch (e) {
+    }
+  }
+
   const closeShop = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsShopVisible(false);
@@ -185,16 +238,27 @@ export default function App() {
             style={{ textAlign: 'center', fontSize: 25 }}
           >
             PET IS DEAD
-        </Text>
+          </Text>
         </TouchableOpacity>
         :
-        <Image
-          style={{ height: 90, width: 90, position: "absolute", top: screen.height / 2 + 50, left: screen.width / 2 - 40 }}
-          resizeMode={'contain'}
-          source={require('./assets/penguin.png')}
-        />
+        isAtWork ?
+          <View
+            style={{ textAlign: 'center', height: 80, width: screen.width, position: "absolute", top: screen.height / 2 + 50, textAlign: 'center' }}
+          >
+            <Text
+              style={{ textAlign: 'center', fontSize: 25 }}
+            >
+              PET IS AT WORK - {Math.floor((lastWork.endTimestamp - Date.now())/1000)}
+            </Text>
+          </View>
+          :
+          <Image
+            style={{ height: 90, width: 90, position: "absolute", top: screen.height / 2 + 50, left: screen.width / 2 - 40 }}
+            resizeMode={'contain'}
+            source={require('./assets/penguin.png')}
+          />
       }
-      
+
       <View style={{ height: screen.height, width: screen.width, position: 'absolute', right: isShopVisible ? 0 : screen.width, }}>
         <Shop addFurniture={addFurniture} closeShop={closeShop} furnitures={furnitures} removeFurnitures={removeFurnitures} money={money} />
       </View>
@@ -204,7 +268,7 @@ export default function App() {
       </View>
 
       <View style={{ height: screen.height, width: screen.width, position: 'absolute', opacity: 1, top: isWorkListVisible ? 0 : screen.height, }}>
-        <Deli giveFood={giveFood} money={money} />
+        <WorkList startWork={startWork} isAtWork={isAtWork} experience={experience} />
       </View>
 
       <View style={{ height: 40, paddingTop: 120 }}>
@@ -214,19 +278,19 @@ export default function App() {
 
       <View style={{ height: 100, width: screen.width, position: 'absolute', bottom: 0, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
         <TouchableOpacity
-          style={{ height: 30, flex: 3, alignItems: 'center' }}
+          style={{ height: 100, flex: 3, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.9)' }}
           onPress={isShopVisible ? closeShop : openShop}
         >
           <Text style={{ height: 30 }}>{isShopVisible ? 'Close' : 'Open'} Shop</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{ height: 30, flex: 3, alignItems: 'center' }}
+          style={{ height: 100, flex: 3, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.9)' }}
           onPress={isWorkListVisible ? closeWorkList : openWorkList}
         >
           <Text style={{ height: 30 }}>{isWorkListVisible ? 'Close' : 'Open'} Work List</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={{ height: 30, flex: 3, alignItems: 'center' }}
+          style={{ height: 100, flex: 3, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.9)' }}
           onPress={isDeliVisible ? closeDeli : openDeli}
         >
           <Text style={{ height: 30 }}>{isDeliVisible ? 'Close' : 'Open'} Deli</Text>
